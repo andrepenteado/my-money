@@ -1,0 +1,63 @@
+# IDEs e editores (VS Code, IntelliJ, Eclipse/STS e NetBeans)
+.vscode/
+.idea/
+*.iml
+*.ipr
+*.iws
+.classpath
+.project
+.settings/
+.metadata/
+.factorypath
+.springBeans
+.sts4-cache/
+.apt_generated/
+.apt_generated_tests/
+nbproject/private/
+nbbuild/
+nbdist/
+*.swp
+*.swo
+*~
+
+# Angular / Node.js
+/frontend/**/node_modules/
+/frontend/**/.angular/
+/frontend/**/dist/
+/frontend/**/out-tsc/
+/frontend/**/coverage/
+/frontend/**/.nyc_output/
+/frontend/**/.cache/
+/frontend/**/.sass-cache/
+/frontend/**/.eslintcache
+/frontend/**/*.tsbuildinfo
+/frontend/**/.npm/
+/frontend/**/npm-debug.log*
+/frontend/**/yarn-debug.log*
+/frontend/**/yarn-error.log*
+/frontend/**/pnpm-debug.log*
+
+# Java / Spring Boot (Gradle e Maven)
+/backend/**/.gradle/
+/backend/**/build/
+/backend/**/target/
+/backend/**/bin/
+/backend/**/out/
+/backend/**/*.class
+/backend/**/*.jar
+/backend/**/*.war
+/backend/**/*.ear
+/backend/**/*.hprof
+/backend/**/hs_err_pid*
+/backend/**/replay_pid*
+!/backend/**/gradle/wrapper/gradle-wrapper.jar
+
+# Logs e arquivos temporários (em qualquer diretório)
+*.log
+tmp/
+.tmp/
+
+# Arquivos do sistema operacional (em qualquer diretório)
+.DS_Store
+Thumbs.db
+Desktop.ini
