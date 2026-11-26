@@ -1,0 +1,150 @@
+<nav class="container" aria-label="Breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item">
+      <a class="breadcrumb-link" routerLink="/">Início</a>
+    </li>
+    <li class="breadcrumb-divider" aria-hidden="true"></li>
+    <li class="breadcrumb-item active" aria-current="page">Lançamentos</li>
+  </ol>
+</nav>
+<section class="container py-3">
+  <header class="row g-3 align-items-center mb-4">
+    <div class="col">
+      <div class="context-label">Receitas e despesas</div>
+      <h1 class="fw-bold">Lançamentos</h1>
+      <p class="fg-3 mb-0">
+        Organize os lançamentos e acompanhe as parcelas geradas.
+      </p>
+    </div>
+    <div class="col-12 md:col-auto">
+      <a class="btn btn-solid theme-primary" routerLink="/lancamentos/cadastro"
+        >+ Novo</a
+      >
+    </div>
+  </header>
+  <div class="card">
+    <div class="card-header">
+      <button
+        type="button"
+        class="btn btn-outline theme-secondary"
+        (click)="filtrosAbertos.set(!filtrosAbertos())"
+        [attr.aria-expanded]="filtrosAbertos()"
+        aria-controls="filtros-lancamentos"
+      >
+        Filtrar pesquisa
+      </button>
+    </div>
+    <div
+      id="filtros-lancamentos"
+      class="collapse filters-collapse"
+      [class.show]="filtrosAbertos()"
+    >
+      <form [formGroup]="f" (ngSubmit)="pesquisar()" class="p-3">
+        <div class="row g-3 align-items-end">
+          <div class="col-12 md:col-4">
+            <app-campo
+              campoId="f-id"
+              label="ID"
+              tipo="inteiro"
+              [controle]="f.controls.id"
+            />
+          </div>
+          <div class="col-12 md:col-4">
+            <app-campo
+              campoId="f-descricao"
+              label="Descrição"
+              tipo="texto"
+              [controle]="f.controls.descricao"
+            />
+          </div>
+          <div class="col-12 md:col-4">
+            <app-campo
+              campoId="f-pessoa"
+              label="Pessoa"
+              tipo="texto"
+              [controle]="f.controls.pessoa"
+            />
+          </div>
+          <div class="col-12 md:col-4">
+            <app-campo
+              campoId="f-valor"
+              label="Valor"
+              tipo="moeda"
+              [controle]="f.controls.valor"
+            />
+          </div>
+          <div class="col-12 md:col-4">
+            <app-campo
+              campoId="f-data"
+              label="Primeiro vencimento"
+              tipo="data"
+              [controle]="f.controls.data"
+            />
+          </div>
+          <div class="col-12 md:col-4">
+            <app-campo
+              campoId="f-recorrencia"
+              label="Recorrência"
+              tipo="inteiro"
+              [controle]="f.controls.recorrencia"
+            />
+          </div>
+          <div class="col-12 md:col-6">
+            <app-campo
+              campoId="f-tipo"
+              label="Tipo"
+              tipo="select"
+              [controle]="f.controls.tipo"
+              [opcoes]="tipos"
+            />
+          </div>
+          <div class="col-12 md:col-6">
+            <app-campo
+              campoId="f-forma_pagamento"
+              label="Forma de pagamento"
+              tipo="select"
+              [controle]="f.controls.forma_pagamento"
+              [opcoes]="formas"
+            />
+          </div>
+          <div class="col-12 d-flex gap-2">
+            <button
+              class="btn btn-solid theme-primary"
+              type="submit"
+              [disabled]="carregando()"
+              title="Pesquisar lançamentos"
+              aria-label="Pesquisar lançamentos"
+            >
+              ⌕</button
+            ><button
+              class="btn btn-outline theme-secondary"
+              type="button"
+              (click)="limpar()"
+              [disabled]="carregando()"
+              title="Limpar filtros"
+              aria-label="Limpar filtros"
+            >
+              ↺
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+    @if (erro()) {
+    <div class="alert theme-danger m-3" role="alert">
+      {{ erro() }}
+      <button class="btn btn-outline theme-danger btn-sm" (click)="pesquisar()">
+        Tentar novamente
+      </button>
+    </div>
+    }
+    <app-grid
+      [lancamentos]="linhas()"
+      [revisao]="revisao()"
+      [preservarContexto]="preservarContexto()"
+      [ocupado]="excluindo() || carregando()"
+      (pronto)="gridPronto($event)"
+      (excluir)="excluir($event)"
+    />
+  </div>
+</section>

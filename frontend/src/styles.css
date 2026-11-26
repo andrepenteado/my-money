@@ -1,0 +1,77 @@
+@import "bootstrap/dist/css/bootstrap.css";
+@import "datatables.net-dt/css/dataTables.dataTables.css";
+
+:root {
+  --bs-primary: #146c61;
+}
+body {
+  background: #f4f6f8;
+  color: #23313c;
+}
+.brand {
+  color: #146c61;
+  font-weight: 800;
+  font-size: 1.35rem;
+}
+header .nav-link.active {
+  color: #146c61;
+  font-weight: 700;
+}
+.card {
+  border: 1px solid #dde4e9;
+  border-radius: 1rem;
+  box-shadow: 0 3px 15px #23313c06;
+}
+.card-header {
+  background: transparent;
+  padding: 1rem 1.25rem;
+}
+.record-cell {
+  max-width: 24rem;
+  overflow-wrap: anywhere;
+  font-weight: 600;
+}
+.filters-collapse {
+  border-bottom: 1px solid #dde4e9;
+}
+.context-label {
+  color: #146c61;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.theme-primary {
+  --bs-theme-bg: #146c61;
+  --bs-theme-fg: #146c61;
+  --bs-theme-border: #146c61;
+  --bs-theme-contrast: #fff;
+  --bs-theme-focus-ring: #146c6166;
+}
+.nav-pills {
+  --bs-nav-pills-link-active-bg: #146c61;
+  --bs-nav-pills-link-active-color: #fff;
+}
+.breadcrumb {
+  padding: 1rem 0 0;
+  margin-bottom: 0;
+}
+.dt-container {
+  padding: 1rem;
+}
+@media (max-width: 767px) {
+  .dt-container {
+    padding: 0.5rem;
+  }
+  .action-bar {
+    flex-direction: column;
+    align-items: stretch !important;
+  }
+  .action-bar > div {
+    display: flex;
+    gap: 0.5rem;
+  }
+  .action-bar .btn {
+    flex: 1;
+  }
+}

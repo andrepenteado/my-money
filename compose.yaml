@@ -1,0 +1,18 @@
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: my_money
+      POSTGRES_USER: my_money
+      POSTGRES_PASSWORD: my_money_local
+    ports:
+      - '127.0.0.1:5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U my_money -d my_money']
+      interval: 3s
+      timeout: 3s
+      retries: 20
+volumes:
+  postgres_data:

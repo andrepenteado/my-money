@@ -1,0 +1,293 @@
+<nav class="container" aria-label="Breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item">
+      <a class="breadcrumb-link" routerLink="/">Início</a>
+    </li>
+    <li class="breadcrumb-divider" aria-hidden="true"></li>
+    <li class="breadcrumb-item">
+      <a class="breadcrumb-link" routerLink="/lancamentos/pesquisar"
+        >Lançamentos</a
+      >
+    </li>
+    <li class="breadcrumb-divider" aria-hidden="true"></li>
+    <li class="breadcrumb-item active" aria-current="page">
+      {{ id() ? 'Edição' : 'Cadastro' }}
+    </li>
+  </ol>
+</nav>
+<section class="container py-3">
+  <header class="mb-4">
+    <div class="context-label">Receitas e despesas</div>
+    <h1 class="fw-bold">
+      {{ id() ? 'Editar lançamento' : 'Novo lançamento' }}
+    </h1>
+    <p class="fg-3">
+      O lançamento gera parcelas mensais. Recorrência zero indica um valor
+      mensal contínuo.
+    </p>
+    <div class="small">
+      @if (f.controls.descricao.value) {<strong>Descrição:</strong> {{
+      f.controls.descricao.value }}}@if (f.controls.descricao.value &&
+      f.controls.pessoa.value) { · }@if (f.controls.pessoa.value) {<strong
+        >Pessoa:</strong
+      >
+      {{ f.controls.pessoa.value }}}
+    </div>
+  </header>
+  @if (erroCarga()) {
+  <div class="alert theme-danger" role="alert">
+    {{ erroCarga() }}
+    <button
+      type="button"
+      class="btn btn-outline theme-danger btn-sm"
+      [disabled]="carregando()"
+      (click)="tentarNovamente()"
+    >
+      Tentar novamente
+    </button>
+    <a routerLink="/lancamentos/pesquisar">Voltar à pesquisa</a>
+  </div>
+  } @if (!erroCarga()) {
+  <div class="card">
+    <div class="card-header">
+      <div
+        class="nav nav-pills gap-2"
+        role="tablist"
+        aria-label="Dados do lançamento"
+      >
+        <button
+          #tabDados
+          type="button"
+          id="tab-lancamento-dados"
+          role="tab"
+          class="nav-link rounded-pill"
+          [class.active]="aba() === 'dados'"
+          [attr.aria-selected]="aba() === 'dados'"
+          aria-controls="painel-lancamento-dados"
+          (click)="aba.set('dados')"
+          (keydown.arrowRight)="aba.set('parcelas'); tabParcelas.focus()"
+        >
+          Dados cadastrais</button
+        ><button
+          #tabParcelas
+          type="button"
+          id="tab-lancamento-parcelas"
+          role="tab"
+          class="nav-link rounded-pill"
+          [class.active]="aba() === 'parcelas'"
+          [attr.aria-selected]="aba() === 'parcelas'"
+          aria-controls="painel-lancamento-parcelas"
+          (click)="aba.set('parcelas')"
+          (keydown.arrowLeft)="aba.set('dados'); tabDados.focus()"
+        >
+          Parcelas
+        </button>
+      </div>
+    </div>
+    <div
+      class="card-body"
+      id="painel-lancamento-dados"
+      role="tabpanel"
+      aria-labelledby="tab-lancamento-dados"
+      [hidden]="aba() !== 'dados'"
+    >
+      <h2 class="h5">Dados do lançamento</h2>
+      <form id="form-lancamento" [formGroup]="f" (ngSubmit)="gravar()">
+        <div class="row g-3">
+          <div class="col-12 md:col-8">
+            <app-campo
+              campoId="f-descricao"
+              label="Descrição"
+              tipo="texto"
+              [controle]="f.controls.descricao"
+              [obrigatorio]="true"
+            />
+          </div>
+          <div class="col-12 md:col-4">
+            <app-campo
+              campoId="f-pessoa"
+              label="Pessoa"
+              tipo="texto"
+              [controle]="f.controls.pessoa"
+              [obrigatorio]="true"
+            />
+          </div>
+          <div class="col-12 md:col-4">
+            <app-campo
+              campoId="f-valor"
+              label="Valor"
+              tipo="moeda"
+              [controle]="f.controls.valor"
+              [obrigatorio]="true"
+            />
+          </div>
+          <div class="col-12 md:col-4">
+            <app-campo
+              campoId="f-data"
+              label="Primeiro vencimento"
+              tipo="data"
+              [controle]="f.controls.data"
+              [obrigatorio]="true"
+            />
+          </div>
+          <div class="col-12 md:col-4">
+            <app-campo
+              campoId="f-recorrencia"
+              label="Recorrência"
+              tipo="inteiro"
+              [controle]="f.controls.recorrencia"
+              [obrigatorio]="true"
+            />
+          </div>
+          <div class="col-12 md:col-6">
+            <app-campo
+              campoId="f-tipo"
+              label="Tipo"
+              tipo="radio"
+              [controle]="f.controls.tipo"
+              [obrigatorio]="true"
+              [opcoes]="tipos"
+            />
+          </div>
+          <div class="col-12 md:col-6">
+            <app-campo
+              campoId="f-forma_pagamento"
+              label="Forma de pagamento"
+              tipo="radio"
+              [controle]="f.controls.forma_pagamento"
+              [obrigatorio]="true"
+              [opcoes]="formas"
+            />
+          </div>
+          <div class="col-12 small fg-3">
+            Recorrência: 1 para uma parcela, 2 ou mais para dividir o valor
+            total, 0 para um valor mensal contínuo.
+          </div>
+        </div>
+      </form>
+      @if (id() && f.controls.recorrencia.value === 0) {
+      <section class="border-top mt-4 pt-4" aria-labelledby="renovacao-titulo">
+        <h2 id="renovacao-titulo" class="h5">Renovação anual — {{ ano }}</h2>
+        <p class="small fg-3">
+          Confirme o valor e o dia antes de gerar o novo ano. Os anos anteriores
+          serão preservados.
+        </p>
+        <div [formGroup]="renovacao" class="row g-3">
+          <div class="col-12 md:col-6">
+            <app-campo
+              campoId="renovacao-valor"
+              label="Valor mensal"
+              tipo="moeda"
+              [controle]="renovacao.controls.valor"
+              [obrigatorio]="true"
+            />
+          </div>
+          <div class="col-12 md:col-6">
+            <app-campo
+              campoId="renovacao-dia"
+              label="Dia do vencimento"
+              tipo="inteiro"
+              [controle]="renovacao.controls.dia_vencimento"
+              [obrigatorio]="true"
+            />
+          </div>
+          <div class="col-12">
+            <button
+              type="button"
+              class="btn btn-outline theme-primary"
+              [disabled]="gravando() || carregando()"
+              (click)="renovar()"
+            >
+              Confirmar e gerar parcelas de {{ ano }}
+            </button>
+          </div>
+        </div>
+      </section>
+      }
+    </div>
+    <div
+      class="card-body"
+      id="painel-lancamento-parcelas"
+      role="tabpanel"
+      aria-labelledby="tab-lancamento-parcelas"
+      [hidden]="aba() !== 'parcelas'"
+    >
+      <h2 class="h5">Parcelas geradas</h2>
+      <p class="fg-3 small">
+        Edite cada parcela para ajustar o previsto ou informar data e valor
+        efetivos.
+      </p>
+      @if (!id()) {
+      <p>Grave o lançamento para gerar suas parcelas.</p>
+      } @else {
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead>
+            <tr>
+              <th>Ações</th>
+              <th>ID</th>
+              <th>Vencimento previsto</th>
+              <th class="text-end">Valor previsto</th>
+              <th>Data efetiva</th>
+              <th class="text-end">Valor efetivo</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (p of parcelas(); track p.id) {
+            <tr>
+              <td>
+                <a
+                  class="btn btn-outline theme-primary btn-sm"
+                  [routerLink]="['/parcelas/cadastro', p.id]"
+                  >Editar</a
+                >
+              </td>
+              <td>{{ p.id }}</td>
+              <td>{{ p.data_vencimento | date:'dd/MM/yyyy' }}</td>
+              <td class="text-end">
+                {{ p.valor_vencimento | currency:'BRL' }}
+              </td>
+              <td>
+                {{ p.data_efetiva ? (p.data_efetiva | date:'dd/MM/yyyy') : '—'
+                }}
+              </td>
+              <td class="text-end">
+                {{ p.valor_efetivo !== null ? (p.valor_efetivo | currency:'BRL')
+                : '—' }}
+              </td>
+            </tr>
+            } @empty {
+            <tr>
+              <td colspan="6">Nenhuma parcela encontrada.</td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      }
+    </div>
+  </div>
+  @if (erroGravacao()) {
+  <div class="alert theme-danger mt-3" role="alert">{{ erroGravacao() }}</div>
+  }
+  <div
+    class="action-bar d-flex align-items-center justify-content-between gap-3 mt-4"
+  >
+    <p class="small fg-3 mb-0">* Campos obrigatórios</p>
+    <div>
+      <a
+        routerLink="/lancamentos/pesquisar"
+        class="btn btn-outline theme-secondary md:me-2"
+        >Voltar</a
+      ><button
+        type="submit"
+        form="form-lancamento"
+        class="btn btn-solid theme-primary"
+        [disabled]="gravando() || carregando()"
+      >
+        {{ gravando() ? 'Gravando…' : 'Gravar' }}
+      </button>
+    </div>
+  </div>
+  }
+</section>

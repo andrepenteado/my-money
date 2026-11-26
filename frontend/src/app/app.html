@@ -1,1 +1,34 @@
-<router-outlet />
+<header class="border-bottom bg-white">
+  <nav
+    class="container d-flex flex-wrap align-items-center gap-3 py-3"
+    aria-label="Menu principal"
+  >
+    <a class="brand text-decoration-none me-auto" routerLink="/">my-money</a
+    ><a
+      class="nav-link"
+      routerLink="/lancamentos/pesquisar"
+      routerLinkActive="active"
+      ariaCurrentWhenActive="page"
+      >Lançamentos</a
+    ><a
+      class="nav-link"
+      routerLink="/parcelas/pesquisar"
+      routerLinkActive="active"
+      ariaCurrentWhenActive="page"
+      >Parcelas</a
+    >
+  </nav>
+</header>
+<main><router-outlet /></main>
+<ngx-sonner-toaster
+  position="top-right"
+  [richColors]="true"
+  [closeButton]="true"
+/>
+<ngx-spinner
+  type="ball-scale-multiple"
+  size="medium"
+  color="#ffffff"
+  bdColor="rgba(20, 38, 48, 0.65)"
+  ><p class="fg-white" role="status">Carregando…</p></ngx-spinner
+>

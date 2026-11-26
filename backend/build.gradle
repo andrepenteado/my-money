@@ -24,6 +24,10 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation("org.springframework.boot:spring-boot-starter-liquibase")
 
+    runtimeOnly 'org.postgresql:postgresql'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
     implementation 'com.querydsl:querydsl-jpa:5.1.0:jakarta'
 
     annotationProcessor 'com.querydsl:querydsl-apt:5.1.0:jakarta'
@@ -33,4 +37,9 @@ dependencies {
 
 tasks.withType(JavaCompile).configureEach {
 	options.encoding = 'UTF-8'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+    inputs.property('databaseUrl', providers.environmentVariable('DATABASE_URL').orElse('jdbc:postgresql://localhost:5432/my_money'))
 }

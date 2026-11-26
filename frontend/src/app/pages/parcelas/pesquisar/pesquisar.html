@@ -1,0 +1,239 @@
+<nav class="container" aria-label="Breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item">
+      <a class="breadcrumb-link" routerLink="/">Início</a>
+    </li>
+    <li class="breadcrumb-divider" aria-hidden="true"></li>
+    <li class="breadcrumb-item active" aria-current="page">Parcelas</li>
+  </ol>
+</nav>
+<section class="container py-3">
+  <header class="mb-4">
+    <div class="context-label">Acompanhamento financeiro</div>
+    <h1 class="fw-bold">Parcelas</h1>
+    <p class="fg-3">
+      Consulte vencimentos, ajuste parcelas e registre os pagamentos ou
+      recebimentos.
+    </p>
+  </header>
+  @if (resumo(); as r) {
+  <div class="row g-3 mb-4">
+    @for (visao of ['previsto', 'consolidado']; track visao) {
+    <div class="col-12 md:col-6">
+      <div class="card h-100">
+        <div class="card-body">
+          <h2 class="h5">
+            {{ visao === 'previsto' ? 'Previsto por vencimento' : 'Consolidado
+            por data efetiva' }}
+          </h2>
+          <p class="small fg-3">
+            Totais de todo o resultado filtrado, no período informado.
+          </p>
+          <dl class="row mb-0">
+            <dt class="col-6">Receitas</dt>
+            <dd class="col-6 text-end">
+              {{ (visao === 'previsto' ? r.previsto.receitas :
+              r.consolidado.receitas) | currency:'BRL' }}
+            </dd>
+            <dt class="col-6">Despesas</dt>
+            <dd class="col-6 text-end">
+              {{ (visao === 'previsto' ? r.previsto.despesas :
+              r.consolidado.despesas) | currency:'BRL' }}
+            </dd>
+            <dt class="col-6">Resultado</dt>
+            <dd class="col-6 text-end fw-bold">
+              {{ (visao === 'previsto' ? r.previsto.resultado :
+              r.consolidado.resultado) | currency:'BRL' }}
+            </dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+    }
+  </div>
+  }
+  <div class="card mb-4">
+    <div class="card-header">
+      <button
+        type="button"
+        class="btn btn-outline theme-secondary"
+        (click)="filtrosAbertos.set(!filtrosAbertos())"
+        [attr.aria-expanded]="filtrosAbertos()"
+        aria-controls="filtros-parcelas"
+      >
+        Filtrar pesquisa
+      </button>
+    </div>
+    <div
+      id="filtros-parcelas"
+      class="collapse filters-collapse"
+      [class.show]="filtrosAbertos()"
+    >
+      <form [formGroup]="f" (ngSubmit)="pesquisar()" class="p-3">
+        <div class="row g-3 align-items-end">
+          <div class="col-12">
+            <label for="visao" class="form-label fw-semibold"
+              >Visão do período</label
+            ><select id="visao" class="form-select" formControlName="visao">
+              <option value="PREVISTA">Prevista — vencimento</option>
+              <option value="CONSOLIDADA">Consolidada — data efetiva</option>
+            </select>
+          </div>
+          <div class="col-12 md:col-6">
+            <app-campo
+              campoId="f-inicio"
+              label="Data inicial"
+              tipo="data"
+              [controle]="f.controls.inicio"
+            />
+          </div>
+          <div class="col-12 md:col-6">
+            <app-campo
+              campoId="f-fim"
+              label="Data final"
+              tipo="data"
+              [controle]="f.controls.fim"
+            />
+          </div>
+          <div class="col-12 md:col-4">
+            <app-campo
+              campoId="f-id"
+              label="ID"
+              tipo="inteiro"
+              [controle]="f.controls.id"
+            />
+          </div>
+          <div class="col-12 md:col-8">
+            <app-campo
+              campoId="f-fk_lancamento"
+              label="Lançamento"
+              tipo="select"
+              [controle]="f.controls.fk_lancamento"
+              [opcoes]="opcoesLancamentos()"
+            />
+          </div>
+          <div class="col-12 md:col-6">
+            <app-campo
+              campoId="f-data_vencimento"
+              label="Vencimento previsto"
+              tipo="data"
+              [controle]="f.controls.data_vencimento"
+            />
+          </div>
+          <div class="col-12 md:col-6">
+            <app-campo
+              campoId="f-valor_vencimento"
+              label="Valor previsto"
+              tipo="moeda"
+              [controle]="f.controls.valor_vencimento"
+            />
+          </div>
+          <div class="col-12 md:col-6">
+            <app-campo
+              campoId="f-data_efetiva"
+              label="Data efetiva"
+              tipo="data"
+              [controle]="f.controls.data_efetiva"
+            />
+          </div>
+          <div class="col-12 md:col-6">
+            <app-campo
+              campoId="f-valor_efetivo"
+              label="Valor efetivo"
+              tipo="moeda"
+              [controle]="f.controls.valor_efetivo"
+            />
+          </div>
+          <div class="col-12 md:col-12">
+            <app-campo
+              campoId="f-forma_pagamento"
+              label="Forma de pagamento"
+              tipo="select"
+              [controle]="f.controls.forma_pagamento"
+              [opcoes]="formas"
+            />
+          </div>
+          @if (f.hasError('periodo')) {
+          <div class="col-12 fg-danger" role="alert">
+            A data final não pode ser anterior à data inicial.
+          </div>
+          }
+          <div class="col-12 d-flex gap-2">
+            <button
+              class="btn btn-solid theme-primary"
+              type="submit"
+              [disabled]="carregando()"
+              title="Pesquisar parcelas"
+              aria-label="Pesquisar parcelas"
+            >
+              ⌕</button
+            ><button
+              class="btn btn-outline theme-secondary"
+              type="button"
+              (click)="limpar()"
+              [disabled]="carregando()"
+              title="Limpar filtros"
+              aria-label="Limpar filtros"
+            >
+              ↺
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+    @if (erro()) {
+    <div class="alert theme-danger m-3" role="alert">
+      {{ erro() }}
+      <button class="btn btn-outline theme-danger btn-sm" (click)="pesquisar()">
+        Tentar novamente
+      </button>
+    </div>
+    }
+    <app-grid
+      [parcelas]="linhas()"
+      [revisao]="revisao()"
+      (pronto)="gridPronto($event)"
+    />
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <h2 class="h5">Vencimentos futuros por mês</h2>
+      <p class="small fg-3">
+        Todos os lançamentos, a partir de hoje. Valores previstos para
+        planejamento.
+      </p>
+      <div class="table-responsive">
+        <table class="table align-middle">
+          <thead>
+            <tr>
+              <th>Mês</th>
+              <th class="text-end">Receitas previstas</th>
+              <th class="text-end">Despesas previstas</th>
+              <th class="text-end">Resultado previsto</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (mes of planejamento(); track mes.mes) {
+            <tr>
+              <td>{{ (mes.mes + '-01') | date:'MM/yyyy' }}</td>
+              <td class="text-end">
+                {{ mes.previsto.receitas | currency:'BRL' }}
+              </td>
+              <td class="text-end">
+                {{ mes.previsto.despesas | currency:'BRL' }}
+              </td>
+              <td class="text-end">
+                {{ mes.previsto.resultado | currency:'BRL' }}
+              </td>
+            </tr>
+            } @empty {
+            <tr>
+              <td colspan="4">Nenhum vencimento futuro encontrado.</td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>

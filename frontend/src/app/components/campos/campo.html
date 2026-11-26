@@ -1,0 +1,58 @@
+@if (tipo() === 'radio') {
+<fieldset>
+  <legend class="form-label fs-6 fw-semibold">
+    {{ label() }} @if (obrigatorio()) {<span class="fg-danger">*</span>}
+  </legend>
+  <div class="d-flex flex-wrap gap-3">
+    @for (opcao of opcoes(); track opcao.valor) {
+    <div class="form-field">
+      <input
+        class="radio"
+        type="radio"
+        [id]="campoId() + '-' + opcao.valor"
+        [formControl]="formControl"
+        [value]="opcao.valor"
+        [attr.aria-describedby]="campoId() + '-erro'"
+        [attr.aria-invalid]="invalido"
+      /><label [for]="campoId() + '-' + opcao.valor">{{ opcao.label }}</label>
+    </div>
+    }
+  </div>
+</fieldset>
+} @else {
+<label [for]="campoId()" class="form-label fw-semibold"
+  >{{ label() }} @if (obrigatorio()) {<span class="fg-danger">*</span>}</label
+>
+@switch (tipo()) { @case ('moeda') {<app-moeda
+  [id]="campoId()"
+  [formControl]="formControl"
+  [invalido]="invalido"
+/>} @case ('data') {<app-data
+  [id]="campoId()"
+  [formControl]="formControl"
+  [invalido]="invalido"
+/>} @case ('select') {<select
+  [id]="campoId()"
+  class="form-select"
+  [formControl]="formControl"
+  [class.is-invalid]="invalido"
+  [attr.aria-invalid]="invalido"
+  [attr.aria-describedby]="campoId() + '-erro'"
+>
+  <option [ngValue]="null">Selecione {{ label().toLowerCase() }}</option>
+  @for (opcao of opcoes(); track opcao.valor) {
+  <option [ngValue]="opcao.valor">{{ opcao.label }}</option>
+  }</select
+>} @default {<input
+  [id]="campoId()"
+  [type]="tipo() === 'inteiro' ? 'number' : 'text'"
+  [attr.inputmode]="tipo() === 'inteiro' ? 'numeric' : null"
+  [attr.step]="tipo() === 'inteiro' ? 1 : null"
+  [formControl]="formControl"
+  class="form-control"
+  [class.is-invalid]="invalido"
+  [attr.aria-invalid]="invalido"
+  [attr.aria-describedby]="campoId() + '-erro'"
+/>} } } @if (invalido) {
+<div [id]="campoId() + '-erro'" class="fg-danger small mt-1">{{ erro }}</div>
+}

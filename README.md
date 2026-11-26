@@ -4,7 +4,7 @@
 
 O backend e o frontend são aplicações separadas. Instale Java, Gradle e Node nas versões de [mise.toml](mise.toml) (por exemplo, com `mise install`) e execute `make install-frontend` na raiz para instalar as dependências do frontend.
 
-Os comandos de build, execução e testes estão no [Makefile](Makefile); consulte-os com `make help`. Para desenvolver, execute `make run-backend` e `make run-frontend` em terminais separados. O frontend fica disponível em `http://localhost:4200/`.
+Os comandos de build, execução e testes estão no [Makefile](Makefile); consulte-os com `make help`. Para desenvolver, inicie o PostgreSQL com `make db-up` (Docker com Compose) e execute `make run-backend` e `make run-frontend` em terminais separados. O backend fica em `http://localhost:8080/` e o frontend em `http://localhost:4200/`. `make db-down` para o banco sem remover seu volume. Os testes do backend usam um PostgreSQL descartável em uma porta livre, sem acessar o banco de desenvolvimento.
 
 ## Configuração técnica e particularidades do my-money
 
@@ -50,7 +50,7 @@ O backend usa Gradle, Spring Data JPA e Bean Validation com APIs Jakarta. O fron
 | Máscaras de entrada | `ngx-mask` | `^22.3.2` |
 | Carregamento de telas e pesquisas | `ngx-spinner` | `^22.0.1` |
 
-Extensões do DataTables e demais dependências estão em `frontend/package.json`. A declaração de dependência não comprova configuração dos providers, estilos ou uso nas telas. Nas aberturas de pesquisa/cadastro e ao aplicar ou limpar filtros, o spinner permanece até os dados estarem renderizados e o grid utilizável, incluindo a inicialização do DataTables.
+Extensões do DataTables e demais dependências estão em `frontend/package.json`. As telas integram essas bibliotecas diretamente, com providers e estilos globais configurados. O Bootstrap 6 usa classes como `md:col-6`, `btn-solid theme-primary` e `radio`, equivalentes aos padrões visuais das skills. Nas aberturas de pesquisa/cadastro e ao aplicar ou limpar filtros, o spinner permanece até os dados estarem renderizados e o grid utilizável, incluindo a inicialização do DataTables.
 
 ### Localização e valores
 
@@ -69,7 +69,11 @@ Um valor monetário recebido como `1234.5` aparece como `1.234,50` e retorna com
 
 ### Persistência e domínio
 
-Liquibase é a escolha para migrações; a organização prevista fica em `backend/src/main/resources/db/changelog/`, com arquivos agrupados em `versions/` pelo `major.minor` da versão da aplicação declarada no Gradle. O starter Liquibase está declarado em `backend/build.gradle`, com versão gerenciada pelo Spring Boot; os changelogs e a configuração de execução ainda não estão presentes no backend. Esta seção define a orientação, sem indicar uma integração pronta.
+O banco é PostgreSQL, conforme a escolha para esta implementação. O ambiente local usa PostgreSQL 18 em [compose.yaml](compose.yaml), com banco e usuário `my_money` e senha local `my_money_local`. Para usar outra instância PostgreSQL, defina `DATABASE_URL` (URL JDBC), `DATABASE_USER` e `DATABASE_PASSWORD` antes de executar o backend.
+
+Liquibase executa o changelog mestre `backend/src/main/resources/db/changelog/db.changelog-master.xml`, com migrações agrupadas em `versions/1.0/` pela versão `1.0.0` do Gradle. Hibernate valida o esquema, sem criá-lo. Os valores monetários usam `DECIMAL(19,2)`: até 17 dígitos inteiros e duas casas decimais. A API recusa valores com mais casas, sem arredondamento silencioso.
+
+As parcelas mantêm internamente a ocorrência gerada (`numero` e `competencia`) e a indicação de ajuste individual (`ajustada`). Esses dados sustentam a preservação dos ajustes e a unicidade de geração; não são campos editáveis nem fazem parte do JSON. Alterar vencimento, valor previsto ou forma de pagamento marca a parcela como ajustada; editar somente a efetivação preserva a previsão. A exclusão do lançamento remove suas parcelas na mesma transação, com integridade referencial também no banco.
 
 O domínio financeiro distingue dados previstos de efetivos. Lançamentos geram parcelas, e a inclusão do lançamento e geração de suas parcelas deve ser uma operação atômica. Ajustes, consolidação, renovação anual e preservação de históricos seguem as regras e critérios de aceite abaixo; esses comportamentos não são regras universais para outros CRUDs.
 
@@ -243,3 +247,40 @@ Filtros de período são critérios da consulta, separados de `pesquisavel: exat
 7. Ao consultar um mês com receitas consolidadas de R$ 3.000,00 e despesas consolidadas de R$ 1.200,00, o sistema apresenta resultado consolidado de R$ 1.800,00; os totais previstos são apresentados separadamente pelos vencimentos.
 8. A alteração de um lançamento é refletida em suas parcelas, respeitando ajustes individuais, parcelas consolidadas e a preservação dos anos anteriores na renovação anual. A exclusão do lançamento remove suas parcelas. Dados inválidos não são gravados e geram uma mensagem compreensível.
 
+
+## Operação dos CRUDs e contrato da API
+
+O menu oferece **Lançamentos** e **Parcelas**. Lançamentos têm pesquisa, inclusão, edição e exclusão confirmada. O cadastro mostra as parcelas geradas em uma aba. Parcelas têm pesquisa e edição individual; não há inclusão ou exclusão manual de parcelas.
+
+Na pesquisa de parcelas, os filtros por campo usam igualdade (e os de descrição/pessoa dos lançamentos usam trecho sem diferenciar maiúsculas/minúsculas). O período adicional usa `inicio`, `fim` e `visao=PREVISTA|CONSOLIDADA`: vencimento na visão prevista e data efetiva na consolidada. Sem período, os totais abrangem todos os registros que atendem aos filtros de campo. Os dois resumos aplicam o mesmo período às suas respectivas datas, independentemente da visão selecionada para o grid. A busca rápida do DataTables refina apenas a tabela e não modifica os totais da API. O planejamento mensal considera todos os vencimentos a partir de hoje, independentemente dos filtros da consulta.
+
+Para renovar um lançamento contínuo, abra o cadastro, informe o valor mensal e o dia de vencimento na seção **Renovação anual** e confirme a ação. A renovação autoriza o ano corrente a partir de janeiro; o primeiro vencimento do lançamento passa a representar o início dessa geração. Os anos anteriores ficam preservados. Repetir a renovação para um ano já gerado é recusado. Uma edição comum não gera automaticamente parcelas de um ano ainda não confirmado. Na redução de recorrência, parcelas ajustadas ou consolidadas continuam preservadas, mesmo que ultrapassem a nova quantidade.
+
+O frontend concentra a URL-base no token `API_URL` de `frontend/src/app/services/api.ts`. No desenvolvimento, `/backend` é encaminhado ao backend por `frontend/proxy.conf.json`, removendo esse prefixo. A API REST abaixo não tem prefixo `/api`. Em uma publicação separada, configure o proxy `/backend` no servidor que entrega o frontend, ou altere o provider de `API_URL` e a política de acesso entre as origens de acordo com a publicação.
+
+| Método | Recurso | Operação / resposta |
+| --- | --- | --- |
+| `GET` | `/lancamentos` ou `/lancamentos/pesquisar` | Lista filtrada de lançamentos; `200` |
+| `POST` | `/lancamentos` | Inclui lançamento e gera parcelas atomicamente; `201`, corpo salvo e `Location` |
+| `GET`, `PUT`, `DELETE` | `/lancamentos/{id}` | Busca, altera ou exclui; `200`, `200`, `204` |
+| `POST` | `/lancamentos/{id}/renovar` | Confirma `{ "ano": 2027, "valor": 100, "dia_vencimento": 31 }` no respectivo ano corrente; `200` |
+| `GET` | `/parcelas` ou `/parcelas/pesquisar` | Lista filtrada com descrição, pessoa, tipo e situação; `200` |
+| `GET`, `PUT` | `/parcelas/{id}` | Busca ou edita a parcela; vínculo de origem imutável; `200` |
+| `GET` | `/parcelas/resumo` | `{ "previsto": { "receitas": 0, "despesas": 0, "resultado": 0 }, "consolidado": { ... } }`; mesmos filtros da pesquisa |
+| `GET` | `/parcelas/planejamento` | Lista de `{ "mes": "yyyy-MM", "previsto": { "receitas": 0, "despesas": 0, "resultado": 0 } }` |
+
+Os payloads de escrita usam os campos das tabelas do contrato: `forma_pagamento`, `fk_lancamento`, `data_vencimento`, `valor_vencimento`, `data_efetiva` e `valor_efetivo` conservam os nomes em snake case. A resposta de parcela acrescenta `descricao`, `pessoa`, `tipo` e `situacao` (`PENDENTE` ou `CONSOLIDADA`); esses campos de leitura não precisam ser enviados na edição. Valores monetários são números e datas são dias ISO. Na inclusão, omita `id`; na edição, um ID no corpo deve corresponder à rota.
+
+Erros usam `application/problem+json`, com `detail` em português e, nas validações de campos, o mapa `erros`. Formato/validação retorna `400`, registro ausente `404`, operação não oferecida `405`, conflito de integridade `409`, regra de negócio `422` e falha inesperada `500`.
+
+## Validação da implementação
+
+`make build` compila os dois módulos e executa os testes de integração do backend. `make test` executa os testes do backend e do frontend. Os comandos do backend iniciam e removem um PostgreSQL descartável por execução usando `scripts/test-backend.sh`; exigem Docker e não usam as credenciais do banco de desenvolvimento.
+
+Os testes de integração cobrem os oito critérios de aceite: geração única e parcelada, resíduo na primeira parcela, último dia do mês e ano bissexto, travessia de ano, recorrência contínua e início futuro, renovação concorrente sem duplicação, preservação de históricos/ajustes/efetivação, totais por período, atualização/exclusão e rollback por falha na geração. Também verificam filtros combinados, constraints PostgreSQL, validação de payloads, nomes/tipos do JSON e códigos HTTP.
+
+Os testes Angular verificam moeda numérica e localizada, digitação em centavos, colagem, datas válidas/inválidas, efetivação conjunta, período, parâmetros HTTP e atualização assíncrona do DOM com DataTables na segunda pesquisa, no resultado vazio, na limpeza e em erro. A validação em Chromium confere cadastro, parcelas, consolidação, filtros, grid único e ausência de rolagem horizontal da página em desktop e celular.
+
+Na validação desta entrega, `make build` concluiu com sucesso, os 25 testes PostgreSQL passaram e `make test-frontend` passou com 14 testes. No Chromium, também foram verificados spinner até o DataTables estar pronto, falha de carga com tentativa novamente, cancelamento de exclusão sem requisição, exclusão confirmada com remoção das parcelas e colagem de dígitos em centavos. Os registros criados na verificação do navegador foram removidos.
+
+O build de produção do frontend mantém dois avisos: bundle inicial de aproximadamente 932 kB (acima do aviso de 500 kB e abaixo do limite de 1 MB) e distribuição CommonJS do SweetAlert2. Esses avisos não impedem o build; os limites e as versões da stack foram preservados.

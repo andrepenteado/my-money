@@ -1,0 +1,164 @@
+<nav class="container" aria-label="Breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item">
+      <a class="breadcrumb-link" routerLink="/">Início</a>
+    </li>
+    <li class="breadcrumb-divider" aria-hidden="true"></li>
+    <li class="breadcrumb-item">
+      <a class="breadcrumb-link" routerLink="/parcelas/pesquisar">Parcelas</a>
+    </li>
+    <li class="breadcrumb-divider" aria-hidden="true"></li>
+    <li class="breadcrumb-item active" aria-current="page">Edição</li>
+  </ol>
+</nav>
+<section class="container py-3">
+  <header class="mb-4">
+    <div class="context-label">Pagamento e recebimento</div>
+    <h1 class="fw-bold">Editar parcela</h1>
+    <p class="fg-3">
+      Ajuste a previsão ou informe os dados efetivos para consolidar a parcela.
+    </p>
+    @if (parcela(); as p) {
+    <div class="small">
+      <strong>Lançamento:</strong> {{ p.descricao }}@if (vencimentoResumo(); as
+      data) { · <strong>Vencimento previsto:</strong> {{ data |
+      date:'dd/MM/yyyy' }}}
+    </div>
+    }
+  </header>
+  @if (erroCarga()) {
+  <div class="alert theme-danger" role="alert">
+    {{ erroCarga() }}
+    <button
+      type="button"
+      class="btn btn-outline theme-danger btn-sm"
+      [disabled]="carregando()"
+      (click)="tentarNovamente()"
+    >
+      Tentar novamente
+    </button>
+    <a routerLink="/parcelas/pesquisar">Voltar à pesquisa</a>
+  </div>
+  } @if (parcela(); as p) {
+  <div class="card">
+    <div class="card-header">
+      <div class="nav nav-pills" role="tablist" aria-label="Dados da parcela">
+        <button
+          class="nav-link active rounded-pill"
+          id="tab-parcela-dados"
+          type="button"
+          role="tab"
+          aria-selected="true"
+          aria-controls="painel-parcela-dados"
+        >
+          Dados cadastrais
+        </button>
+      </div>
+    </div>
+    <div
+      class="card-body"
+      id="painel-parcela-dados"
+      role="tabpanel"
+      aria-labelledby="tab-parcela-dados"
+    >
+      <form id="form-parcela" [formGroup]="f" (ngSubmit)="gravar()">
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label fw-semibold" for="origem-parcela"
+              >Lançamento <span class="fg-danger">*</span></label
+            ><input
+              id="origem-parcela"
+              class="form-control bg-2"
+              readonly
+              [value]="p.descricao"
+            /><a
+              class="small"
+              [routerLink]="['/lancamentos/cadastro', p.fk_lancamento]"
+              >Abrir lançamento de origem</a
+            >
+          </div>
+          <div class="col-12 md:col-6">
+            <app-campo
+              campoId="f-data_vencimento"
+              label="Vencimento previsto"
+              tipo="data"
+              [controle]="f.controls.data_vencimento"
+              [obrigatorio]="true"
+            />
+          </div>
+          <div class="col-12 md:col-6">
+            <app-campo
+              campoId="f-valor_vencimento"
+              label="Valor previsto"
+              tipo="moeda"
+              [controle]="f.controls.valor_vencimento"
+              [obrigatorio]="true"
+            />
+          </div>
+          <div class="col-12 border-top mt-4 pt-3">
+            <h2 class="h5">Consolidação</h2>
+            <p class="small fg-3">
+              Informe data e valor efetivos juntos. Eles podem ser diferentes da
+              previsão.
+            </p>
+          </div>
+          <div class="col-12 md:col-6">
+            <app-campo
+              campoId="f-data_efetiva"
+              label="Data efetiva"
+              tipo="data"
+              [controle]="f.controls.data_efetiva"
+            />
+          </div>
+          <div class="col-12 md:col-6">
+            <app-campo
+              campoId="f-valor_efetivo"
+              label="Valor efetivo"
+              tipo="moeda"
+              [controle]="f.controls.valor_efetivo"
+            />
+          </div>
+          <div class="col-12 md:col-12">
+            <app-campo
+              campoId="f-forma_pagamento"
+              label="Forma de pagamento"
+              tipo="radio"
+              [controle]="f.controls.forma_pagamento"
+              [obrigatorio]="true"
+              [opcoes]="formas"
+            />
+          </div>
+          @if (f.hasError('efetivacao')) {
+          <div class="col-12 fg-danger" role="alert">
+            Informe a data efetiva e o valor efetivo juntos para consolidar a
+            parcela.
+          </div>
+          }
+        </div>
+      </form>
+    </div>
+  </div>
+  @if (erroGravacao()) {
+  <div class="alert theme-danger mt-3" role="alert">{{ erroGravacao() }}</div>
+  }
+  <div
+    class="action-bar d-flex align-items-center justify-content-between gap-3 mt-4"
+  >
+    <p class="small fg-3 mb-0">* Campos obrigatórios</p>
+    <div>
+      <a
+        class="btn btn-outline theme-secondary md:me-2"
+        routerLink="/parcelas/pesquisar"
+        >Voltar</a
+      ><button
+        type="submit"
+        form="form-parcela"
+        class="btn btn-solid theme-primary"
+        [disabled]="gravando() || carregando()"
+      >
+        {{ gravando() ? 'Gravando…' : 'Gravar' }}
+      </button>
+    </div>
+  </div>
+  }
+</section>

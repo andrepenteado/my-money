@@ -1,0 +1,105 @@
+@if (visivel()) {
+<div class="table-responsive">
+  <table #tabela class="table table-hover align-middle w-100">
+    <thead>
+      <tr>
+        <th>Ações</th>
+        <th>ID</th>
+        <th>{{ lancamentos() !== null ? 'Descrição' : 'Lançamento' }}</th>
+        <th>Pessoa</th>
+        @if (lancamentos() !== null) {
+        <th class="text-end">Valor</th>
+        <th>Primeiro vencimento</th>
+        <th>Tipo</th>
+        <th>Forma de pagamento</th>
+        } @else {
+        <th>Tipo</th>
+        <th>Situação</th>
+        <th>Vencimento previsto</th>
+        <th class="text-end">Valor previsto</th>
+        <th>Data efetiva</th>
+        <th class="text-end">Valor efetivo</th>
+        <th>Forma de pagamento</th>
+        }
+      </tr>
+    </thead>
+    <tbody>
+      @for (l of linhasLancamento(); track l.id) {
+      <tr>
+        <td>
+          <div class="d-flex gap-2">
+            <a
+              class="btn btn-outline theme-primary btn-sm rounded-circle"
+              [routerLink]="['/lancamentos/cadastro', l.id]"
+              [attr.aria-label]="'Editar lançamento ' + l.descricao"
+              [title]="'Editar ' + l.descricao"
+              >✎</a
+            ><button
+              type="button"
+              class="btn btn-outline theme-danger btn-sm rounded-circle"
+              [disabled]="ocupado()"
+              (click)="excluir.emit(l)"
+              [attr.aria-label]="'Excluir lançamento ' + l.descricao"
+              [title]="'Excluir ' + l.descricao"
+            >
+              ×
+            </button>
+          </div>
+        </td>
+        <td>{{ l.id }}</td>
+        <td class="record-cell">{{ l.descricao }}</td>
+        <td>{{ l.pessoa }}</td>
+        <td class="text-end text-nowrap" [attr.data-order]="l.valor">
+          {{ l.valor | currency:'BRL' }}
+        </td>
+        <td [attr.data-order]="l.data">{{ l.data | date:'dd/MM/yyyy' }}</td>
+        <td>{{ tipos[l.tipo] }}</td>
+        <td>{{ formas[l.forma_pagamento] }}</td>
+      </tr>
+      } @for (p of linhasParcela(); track p.id) {
+      <tr>
+        <td>
+          <a
+            class="btn btn-outline theme-primary btn-sm rounded-circle"
+            [routerLink]="['/parcelas/cadastro', p.id]"
+            [attr.aria-label]="'Editar parcela de ' + p.descricao"
+            [title]="'Editar parcela de ' + p.descricao"
+            >✎</a
+          >
+        </td>
+        <td>{{ p.id }}</td>
+        <td class="record-cell">{{ p.descricao }}</td>
+        <td>{{ p.pessoa }}</td>
+        <td>{{ tipos[p.tipo] }}</td>
+        <td>
+          <span
+            class="badge"
+            [class.theme-success]="p.situacao === 'CONSOLIDADA'"
+            [class.theme-secondary]="p.situacao === 'PENDENTE'"
+            >{{ p.situacao === 'CONSOLIDADA' ? 'Consolidada' : 'Pendente'
+            }}</span
+          >
+        </td>
+        <td [attr.data-order]="p.data_vencimento">
+          {{ p.data_vencimento | date:'dd/MM/yyyy' }}
+        </td>
+        <td class="text-end text-nowrap" [attr.data-order]="p.valor_vencimento">
+          {{ p.valor_vencimento | currency:'BRL' }}
+        </td>
+        <td [attr.data-order]="p.data_efetiva ?? ''">
+          {{ p.data_efetiva ? (p.data_efetiva | date:'dd/MM/yyyy') : '—' }}
+        </td>
+        <td
+          class="text-end text-nowrap"
+          [attr.data-order]="p.valor_efetivo ?? 0"
+        >
+          {{ p.valor_efetivo !== null ? (p.valor_efetivo | currency:'BRL') : '—'
+          }}
+        </td>
+        <td>{{ formas[p.forma_pagamento] }}</td>
+      </tr>
+      }
+    </tbody>
+  </table>
+</div>
+}
